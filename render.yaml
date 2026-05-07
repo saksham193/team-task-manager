@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: team-task-manager-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: team-task-manager-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: PROJECT_NAME
+        value: Team Task Manager API
+      - key: ALLOWED_ORIGINS
+        value: https://team-task-manager.onrender.com
+
+  - type: web
+    name: team-task-manager
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://team-task-manager-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: team-task-manager-db
+    databaseName: team_task_manager
+    user: team_task_manager_user
+    plan: basic-256mb
